@@ -8,8 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
-using Microsoft.Azure.ServiceBus;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace EventHubsSender
@@ -18,7 +16,6 @@ namespace EventHubsSender
     {
         
         private static string connectionString = ConfigurationManager.AppSettings["connectionString"];
-        private static string eventHubName = ConfigurationManager.AppSettings["eventHubName"];
         private static string fileUrl = ConfigurationManager.AppSettings["fileUrl"];
         private static bool hasHeaders = Boolean.Parse(ConfigurationManager.AppSettings["hasHeaders"]);
         private static int numLinesPerBatch = Int32.Parse(ConfigurationManager.AppSettings["numLinesPerBatch"]);
@@ -45,6 +42,10 @@ namespace EventHubsSender
                 string headerLine;
                 string[] fields = null;
                 JObject schema = null;
+                string connectionSubstring = connectionString.Substring(0,connectionString.LastIndexOf(';'));
+                Console.WriteLine(connectionSubstring);
+                string eventHubName = connectionString.Substring(connectionString.LastIndexOf('=')+1);
+                Console.WriteLine(eventHubName);
 
                 // Read and display lines from the file until the end of 
                 // the file is reached.
@@ -72,7 +73,7 @@ namespace EventHubsSender
 
                 //topicClient = new TopicClient(ServiceBusConnectionString, TopicName);
                 // Create a producer client that you can use to send events to an event hub
-                await using (var producerClient = new EventHubProducerClient(connectionString, eventHubName))
+                await using (var producerClient = new EventHubProducerClient(connectionSubstring, eventHubName))
                 {
                     int count = 0;
                     int countTotal = 0;
