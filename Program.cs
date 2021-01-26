@@ -1,6 +1,8 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -23,6 +25,7 @@ namespace EventHubsSender
         private static int timeField = Int32.Parse(ConfigurationManager.AppSettings["timeField"]);
         private static bool setToCurrentTime = Boolean.Parse(ConfigurationManager.AppSettings["setToCurrentTime"]);
         private static string dateFormat = ConfigurationManager.AppSettings["dateFormat"];
+        private static CultureInfo dateCulture = CultureInfo.CreateSpecificCulture(ConfigurationManager.AppSettings["dateCulture"]);
         private static bool repeatSimulation = Boolean.Parse(ConfigurationManager.AppSettings["repeatSimulation"]);
         static async Task Main()
         {
@@ -30,6 +33,7 @@ namespace EventHubsSender
             try
             {
 
+                Console.WriteLine($"Fetching and reading file: {fileUrl}");
                 HttpWebRequest myHttpWebRequest = (HttpWebRequest)WebRequest.Create(fileUrl);
                 // Sends the HttpWebRequest and waits for the response.			
                 HttpWebResponse myHttpWebResponse = (HttpWebResponse)myHttpWebRequest.GetResponse();
@@ -41,11 +45,7 @@ namespace EventHubsSender
                 string line;
                 string headerLine;
                 string[] fields = null;
-                JObject schema = null;
-                string connectionSubstring = connectionString.Substring(0,connectionString.LastIndexOf(';'));
-                Console.WriteLine(connectionSubstring);
-                string eventHubName = connectionString.Substring(connectionString.LastIndexOf('=')+1);
-                Console.WriteLine(eventHubName);
+                JObject schema =  new JObject();
 
                 // Read and display lines from the file until the end of 
                 // the file is reached.
@@ -57,19 +57,36 @@ namespace EventHubsSender
                 bool runTask = true;
 
 
-                if (hasHeaders)
-                {
+                //if (hasHeaders)
+                //{
                     if ((headerLine = contentArray[0]) != null)
                     {
-                        schema = new JObject();
+                        //schema = new JObject();
                         fields = headerLine.Split(",");
+                        int fieldNum = 1;
                         foreach (string fieldName in fields)
                         {
-                            schema[fieldName] = null;
+                            if (hasHeaders){
+                                schema[fieldName] = null;
+                            }
+                            else{  
+                                string genericFieldName = $"field{fieldNum}";                              
+                                schema[genericFieldName] = null;
+                            }
+                            fieldNum += 1;
                         }
+                        Console.WriteLine("Schema created based on the incoming data:");
                         Console.WriteLine(schema);
+                        Dictionary<string,string> dictObj = schema.ToObject<Dictionary<string,string>>();
+                        //Console.WriteLine($"New fields: {dictObj.Keys}");
+                        dictObj.Keys.CopyTo(fields,0);
                     }
-                }
+                //}
+                
+                string connectionSubstring = connectionString.Substring(0,connectionString.LastIndexOf(';'));
+                Console.WriteLine($"Event hub connection string: {connectionSubstring}");
+                string eventHubName = connectionString.Substring(connectionString.LastIndexOf('=')+1);
+                Console.WriteLine($"Event hub name (entity path): {eventHubName}");
 
                 //topicClient = new TopicClient(ServiceBusConnectionString, TopicName);
                 // Create a producer client that you can use to send events to an event hub
@@ -96,7 +113,7 @@ namespace EventHubsSender
                             eventBatch = eventBatch ?? await producerClient.CreateBatchAsync();
                             dynamic[] values = line.Split(",");
                             for (int i = 0; i < schema.Count; i++)
-                            {
+                            { 
                                 long longVal = 0;
                                 decimal decVal = 0;
                                 bool isLong = long.TryParse(values[i], out longVal);
@@ -111,7 +128,12 @@ namespace EventHubsSender
                                 }
                                 else
                                 {
-                                    schema[fields[timeField]] = DateTime.Now.ToString(dateFormat);
+                                    try{
+                                        schema[fields[timeField]] = DateTime.Now.ToString(dateFormat,dateCulture);
+                                    }
+                                    catch(Exception e){
+                                        schema[fields[timeField]] = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                                    }
                                 }
                             }
                             //Console.WriteLine(schema.ToString());
