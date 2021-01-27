@@ -7,7 +7,7 @@ C#.Net console application to send data from a delimited text file to an Azure E
 
 ## Instructions
 
-1. Detailed instructions are in the 
+1. Detailed instructions are in the Deploy EventHubSender to Azure App Service using Visual Studio Code.docx file in this repo.
 
 ## Requirements
  
