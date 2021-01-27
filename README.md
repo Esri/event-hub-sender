@@ -16,14 +16,11 @@ C#.Net console application to send data from a delimited text file to an Azure E
 * Visual Studio Code (VS Code) installed on your local machine. (Get it here: https://code.visualstudio.com/)
 * The Azure App Service extension for VS Code (install from within VS Code or get it here: https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureappservice)
 * Git installed on your local machine. (Get it here: https://git-scm.com/)
-* A delimited text file of events you wish to simulate. It must be hosted in a place where it is accessible by URL such as an Amazon S3 bucket. To get started you may use the sample file hosted in this repo.
+* A delimited text file of events you wish to simulate. It must be hosted in a place where it is accessible by URL such as an Amazon S3 bucket. To get started you may use the sample file hosted in this repo (https://github.com/kengorton/event-hub-sender/blob/master/Charlotte_57Buses_ShortList.csv).
 
 
 ## Resources
 
-* [ArcGIS for JavaScript API Resource Center](http://help.arcgis.com/en/webapi/javascript/arcgis/index.html)
-* [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
-* [twitter@esri](http://twitter.com/esri)
 
 ## Issues
 
