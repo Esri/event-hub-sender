@@ -8,7 +8,7 @@ This is a C# .Net console application to send data from a delimited text file to
 
 ## Instructions
 
-1. Clone the repoin Visual Studio Code.
+1. Clone the repo in Visual Studio Code.
 2. Update the app.config file as follows:
 
     -	connectionString – Paste the complete connection string to your Event Hub.
