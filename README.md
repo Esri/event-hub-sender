@@ -16,7 +16,7 @@ C# .Net console application to send data from a delimited text file to an Azure 
 * Visual Studio Code (VS Code) installed on your local machine. (Get it here: https://code.visualstudio.com/)
 * The Azure App Service extension for VS Code (install from within VS Code or get it here: https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureappservice)
 * Git installed on your local machine. (Get it here: https://git-scm.com/)
-* A delimited text file of events you wish to simulate. It must be hosted in a place where it is accessible by URL such as an Amazon S3 bucket. To get started you may use the sample file hosted in this repo (https://github.com/kengorton/event-hub-sender/blob/master/Charlotte_57Buses_ShortList.csv).
+* A delimited text file of events you wish to simulate. It must be hosted in a place where it is accessible by URL such as an Amazon S3 bucket. To get started you may use the sample file hosted in this repo (https://a4iot-test-data.s3.us-west-2.amazonaws.com/point/Charlotte_Simulations/57Buses_in_CharlotteNC.csv).
 
 
 ## Resources
