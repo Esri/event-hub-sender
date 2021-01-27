@@ -23,12 +23,12 @@ This is a C# .Net console application to send data from a delimited text file to
     -	dateCulture - Optional, examples: "en-US", "es-ES", "fr-FR"; only used if setToCurrentTime is true and dateFormat is not empty. In that case date strings will be formatted according to the culture specified in this setting or the default culture if empty
 
 3. Commit the changes in the app.config file
-4. Deploy to Azure App Service
+4. Deploy to Azure App Service to your Azure portal.
 5. In the resulting App Service, configure the deployment source to be LocalGit.
-6. Deploy to Web App
+6. Deploy to Web App.
 7. Set up a feed in ArcGIS Velocity or an input in ArcGIS GeoEvent Server to ingest your Event Hub messages.
 
-Detailed instructions are in the Deploy EventHubSender to Azure App Service using Visual Studio Code .docx file in this repo.
+Detailed instructions are in the "Deploy EventHubSender to Azure App Service using Visual Studio Code .docx" file in this repo.
 
 ## Requirements
 
