@@ -20,6 +20,7 @@ namespace EventHubsSender
         private static string connectionString = ConfigurationManager.AppSettings["connectionString"];
         private static string fileUrl = ConfigurationManager.AppSettings["fileUrl"];
         private static bool hasHeaders = Boolean.Parse(ConfigurationManager.AppSettings["hasHeaders"]);
+        private static string fieldDelimiter = ConfigurationManager.AppSettings["fieldDelimiter"];
         private static int numLinesPerBatch = Int32.Parse(ConfigurationManager.AppSettings["numLinesPerBatch"]);
         private static int sendInterval = Int32.Parse(ConfigurationManager.AppSettings["sendInterval"]);
         private static int timeField = Int32.Parse(ConfigurationManager.AppSettings["timeField"]);
@@ -31,8 +32,7 @@ namespace EventHubsSender
         {
             //Console.WriteLine("Starting...");
             try
-            {
-
+            {   
                 Console.WriteLine($"Fetching and reading file: {fileUrl}");
                 HttpWebRequest myHttpWebRequest = (HttpWebRequest)WebRequest.Create(fileUrl);
                 // Sends the HttpWebRequest and waits for the response.			
@@ -62,7 +62,7 @@ namespace EventHubsSender
                     if ((headerLine = contentArray[0]) != null)
                     {
                         //schema = new JObject();
-                        fields = headerLine.Split(",");
+                        fields = headerLine.Split(fieldDelimiter);
                         int fieldNum = 1;
                         foreach (string fieldName in fields)
                         {
@@ -111,7 +111,7 @@ namespace EventHubsSender
                                 stopwatch.Start();
                             }
                             eventBatch = eventBatch ?? await producerClient.CreateBatchAsync();
-                            dynamic[] values = line.Split(",");
+                            dynamic[] values = line.Split(fieldDelimiter);
                             for (int i = 0; i < schema.Count; i++)
                             { 
                                 long longVal = 0;
