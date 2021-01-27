@@ -1,6 +1,5 @@
 # event-hub-sender
-C# .Net console application to send data from a delimited text file to an Azure Event Hub.
-
+This is a C# .Net console application to send data from a delimited text file to an Azure Event Hub. Publish this console app to your Azure portal to create a continuously running source of messages to your Event Hub to support demos of Velocity and GeoEvent Server.
 
 
 ## Features
