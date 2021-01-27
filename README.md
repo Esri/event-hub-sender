@@ -1,5 +1,5 @@
 # event-hub-sender
-C#.Net console application to send data from a delimited text file to an Azure Event Hub.
+C# .Net console application to send data from a delimited text file to an Azure Event Hub.
 
 
 
