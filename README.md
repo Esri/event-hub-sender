@@ -7,13 +7,17 @@ C#.Net console application to send data from a delimited text file to an Azure E
 
 ## Instructions
 
-1. Fork and then clone the repo. 
-2. Run and try the samples.
+1. Detailed instructions are in the 
 
 ## Requirements
+ 
+* Microsoft Azure account with and active subscription. (Create on efor free: https://azure.microsoft.com/free/?utm_source=campaign&utm_campaign=vscode-tutorial-appservice-extension&mktingSource=vscode-tutorial-appservice-extension)
+* An Azure Event Hub. (Create one this way: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-create)
+* Visual Studio Code (VS Code) installed on your local machine. (Get it here: https://code.visualstudio.com/)
+* The Azure App Service extension for VS Code (install from within VS Code or get it here: https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureappservice)
+* Git installed on your local machine. (Get it here: https://git-scm.com/)
+* A delimited text file of events you wish to simulate. It must be hosted in a place where it is accessible by URL such as an Amazon S3 bucket. To get started you may use the sample file hosted in this repo.
 
-* Notepad or your favorite HTML editor
-* Web browser with access to the Internet
 
 ## Resources
 
@@ -44,7 +48,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/quickstart-map-js/master/license.txt) file.
+A copy of the license is available in the repository's [license.txt]( https://github.com/kengorton/event-hub-sender/blob/master/license.txt) file.
 
 [](Esri Tags: ArcGIS Velocity)
 [](Esri Language: C#.Net)​
