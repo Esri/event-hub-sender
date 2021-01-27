@@ -4,7 +4,8 @@ C# .Net console application to send data from a delimited text file to an Azure 
 
 
 ## Features
-Use event-hub-sender to send records from your delimited data file as event messages to an Azure Event Hub. 
+* Use event-hub-sender to send records from your delimited data file as event messages to an Azure Event Hub. 
+* Provides a source of messages for your Velocity and GeoEvent Server demos.
 
 ## Instructions
 
@@ -31,7 +32,7 @@ Use event-hub-sender to send records from your delimited data file as event mess
 Detailed instructions are in the Deploy EventHubSender to Azure App Service using Visual Studio Code .docx file in this repo.
 
 ## Requirements
- 
+
 * Microsoft Azure account with and active subscription. (Create one for free: https://azure.microsoft.com/free/?utm_source=campaign&utm_campaign=vscode-tutorial-appservice-extension&mktingSource=vscode-tutorial-appservice-extension)
 * An Azure Event Hub. (Create one this way: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-create)
 * Visual Studio Code (VS Code) installed on your local machine. (Get it here: https://code.visualstudio.com/)
