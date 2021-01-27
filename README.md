@@ -11,7 +11,7 @@ C#.Net console application to send data from a delimited text file to an Azure E
 
 ## Requirements
  
-* Microsoft Azure account with and active subscription. (Create on efor free: https://azure.microsoft.com/free/?utm_source=campaign&utm_campaign=vscode-tutorial-appservice-extension&mktingSource=vscode-tutorial-appservice-extension)
+* Microsoft Azure account with and active subscription. (Create one for free: https://azure.microsoft.com/free/?utm_source=campaign&utm_campaign=vscode-tutorial-appservice-extension&mktingSource=vscode-tutorial-appservice-extension)
 * An Azure Event Hub. (Create one this way: https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-create)
 * Visual Studio Code (VS Code) installed on your local machine. (Get it here: https://code.visualstudio.com/)
 * The Azure App Service extension for VS Code (install from within VS Code or get it here: https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azureappservice)
