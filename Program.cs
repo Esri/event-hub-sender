@@ -19,6 +19,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -34,8 +35,9 @@ namespace EventHubsSender
         
         private static string connectionString = ConfigurationManager.AppSettings["connectionString"];
         private static string fileUrl = ConfigurationManager.AppSettings["fileUrl"];
-        private static bool hasHeaders = Boolean.Parse(ConfigurationManager.AppSettings["hasHeaders"]);
+        private static bool hasHeaderRow = Boolean.Parse(ConfigurationManager.AppSettings["hasHeaderRow"]);
         private static string fieldDelimiter = ConfigurationManager.AppSettings["fieldDelimiter"];
+        private static bool convertToJson = Boolean.Parse(ConfigurationManager.AppSettings["convertToJson"]);
         private static int numLinesPerBatch = Int32.Parse(ConfigurationManager.AppSettings["numLinesPerBatch"]);
         private static int sendInterval = Int32.Parse(ConfigurationManager.AppSettings["sendInterval"]);
         private static int timeField = Int32.Parse(ConfigurationManager.AppSettings["timeField"]);
@@ -68,12 +70,13 @@ namespace EventHubsSender
 
                 readStream.Close();
 
-                int c = contentArray.Length;
+                //int c = contentArray.Length;
                 bool runTask = true;
 
 
-                //if (hasHeaders)
-                //{
+
+                //create a schema of field names if there is a header row or of generic fieldnames if not
+                if(convertToJson){
                     if ((headerLine = contentArray[0]) != null)
                     {
                         //schema = new JObject();
@@ -81,7 +84,7 @@ namespace EventHubsSender
                         int fieldNum = 1;
                         foreach (string fieldName in fields)
                         {
-                            if (hasHeaders){
+                            if (hasHeaderRow){
                                 schema[fieldName] = null;
                             }
                             else{  
@@ -93,10 +96,13 @@ namespace EventHubsSender
                         Console.WriteLine("Schema created based on the incoming data:");
                         Console.WriteLine(schema);
                         Dictionary<string,string> dictObj = schema.ToObject<Dictionary<string,string>>();
-                        //Console.WriteLine($"New fields: {dictObj.Keys}");
                         dictObj.Keys.CopyTo(fields,0);
                     }
-                //}
+                }
+                if (hasHeaderRow){
+                    contentArray = contentArray.Where((source, index) => index != 0).ToArray();
+                }
+                int c = contentArray.Length;
                 
                 string connectionSubstring = connectionString.Substring(0,connectionString.LastIndexOf(';'));
                 Console.WriteLine($"Event hub connection string: {connectionSubstring}");
@@ -113,11 +119,16 @@ namespace EventHubsSender
                     //string messageBody = "";
                     
                     var stopwatch = new Stopwatch();
+                    var taskStopwatch = new Stopwatch();
                     while (runTask)
                     {
-                        for (int l = (hasHeaders ? 1 : 0); l < c; l++)
+                        taskStopwatch.Start();
+                        for (int l = 0; l < c; l++)
                         {
                             line = contentArray[l];
+                            if (String.IsNullOrEmpty(line)){
+                                continue;
+                            }
 
                             // Create a batch of events if needed
                             if (eventBatch == null)
@@ -127,45 +138,63 @@ namespace EventHubsSender
                             }
                             eventBatch = eventBatch ?? await producerClient.CreateBatchAsync();
                             dynamic[] values = line.Split(fieldDelimiter);
-                            for (int i = 0; i < schema.Count; i++)
-                            { 
-                                long longVal = 0;
-                                decimal decVal = 0;
-                                bool isLong = long.TryParse(values[i], out longVal);
-                                bool isDec = decimal.TryParse(values[i], out decVal);
-                                schema[fields[i]] = isLong ? longVal : isDec ? decVal : values[i];
-                            }
+                            
                             if (setToCurrentTime)
                             {
                                 if (String.IsNullOrEmpty(dateFormat))
                                 {
-                                    schema[fields[timeField]] = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                                    string dt = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString();
+                                    values[timeField] = dt;
                                 }
                                 else
                                 {
                                     try{
-                                        schema[fields[timeField]] = DateTime.Now.ToString(dateFormat,dateCulture);
+                                        string dt = DateTime.Now.ToString(dateFormat,dateCulture);
+                                        values[timeField] = dt;
                                     }
                                     catch(Exception e){
-                                        schema[fields[timeField]] = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds();
+                                        string dt = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString();
+                                        values[timeField] = dt;
                                     }
                                 }
                             }
                             //Console.WriteLine(schema.ToString());
+
+                            
+
+                            if(convertToJson){
+                                for (int i = 0; i < schema.Count; i++)
+                                { 
+                                    long longVal = 0;
+                                    decimal decVal = 0;
+                                    bool isLong = long.TryParse(values[i], out longVal);
+                                    bool isDec = decimal.TryParse(values[i], out decVal);
+                                    schema[fields[i]] = isLong ? longVal : isDec ? decVal : values[i];
+                                }
+                                //Console.WriteLine($"Schema: {schema}");
+                            }
+
                             count++;
+                            countTotal++;
 
                             // Add events to the batch. An event is a represented by a collection of bytes and metadata. 
 
-                            eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes(schema.ToString())));
+                            if (convertToJson){
+                                eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes(schema.ToString())));
+                            }
+                            else{
+                                eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes(string.Join(fieldDelimiter, values))));
+                            }
+                            
                             //messageBody = messageBody + schema.ToString()+"\n";
-                            if (count == numLinesPerBatch)
+                            if (count == numLinesPerBatch || countTotal == c)
                             {
 
                                 // Use the producer client to send the batch of events to the event hub
                                 await producerClient.SendAsync(eventBatch);
                                 //var message = new Message(Encoding.UTF8.GetBytes(messageBody));
                                 //await topicClient.SendAsync(message);
-                                countTotal += count;
+                                //countTotal += count;
                                 eventBatch = null;
                                 //messageBody = "";
                                 stopwatch.Stop();
@@ -173,21 +202,23 @@ namespace EventHubsSender
                                 stopwatch.Reset();
                                 //Console.WriteLine(string.Format("A batch of {0} events has been published. It took {1} milliseconds. Total sent: {2}.", count, elapsed_time, countTotal));
                                 if (elapsed_time < sendInterval) {
-                                    Console.WriteLine(string.Format("A batch of {0} events has been published. It took {1} milliseconds. Waiting for {2} milliseconds. Total sent: {3}.", count, elapsed_time, sendInterval - elapsed_time, countTotal));
+                                    Console.WriteLine(string.Format("A batch of {0} events has been published in {1}ms. Waiting for {2}ms. Total sent: {3}. Total elapsed time: {4}ms", count, elapsed_time, sendInterval - elapsed_time, countTotal,(int)taskStopwatch.ElapsedMilliseconds));
                                     Thread.Sleep(sendInterval - elapsed_time);
                                 }
                                 else
                                 {
-                                    Console.WriteLine(string.Format("A batch of {0} events has been published. It took {1} milliseconds.  Total sent: {2}.", count, elapsed_time, countTotal));
+                                    Console.WriteLine(string.Format("A batch of {0} events has been published in {1}ms.  Total sent: {2}. Total elapsed time: {3}ms", count, elapsed_time, countTotal,(int)taskStopwatch.ElapsedMilliseconds));
                                 }
                                 count = 0;
 
                             }
                         }
-                        Console.WriteLine(string.Format("Reached the end of the simulation file. Repeat is set to {0}", (repeatSimulation)));
+                        Console.WriteLine(string.Format($"Reached the end of the simulation file. Total sent: {countTotal}. Repeat is set to {repeatSimulation}."));
                         if (!repeatSimulation)
                         {
                             runTask = false;
+                            taskStopwatch.Stop();                            
+                            Console.WriteLine($"Total task duration: {(int)taskStopwatch.ElapsedMilliseconds}ms");
                         }
                     }
                 }
