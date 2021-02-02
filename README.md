@@ -11,7 +11,7 @@ This is a C# .Net console application to send data from a delimited text file to
 1. Clone the repo in Visual Studio Code.
 2. Update the app.config file as follows:
 
-    -	connectionString – Paste the complete connection string to your Event Hub.
+    -	connectionString – The complete connection string to your Event Hub.
     -	fileUrl – Enter the URL to the simulation delimited file containing the data to be sent between the empty quotes for the value of fileUrl. If using our sample file, set this value to “https://a4iot-test-data.s3.us-west-2.amazonaws.com/point/Charlotte_Simulations/57Buses_in_CharlotteNC.csv”.
     -	hasHeaderRow – Enter true if the simulation file has a header row of field names, false if not. If using our sample csv file, set this value to “true”.
     -	fieldDelimiter – the delimiter between fields in the simulation file. If using our sample csv file, set this value to “,”.
