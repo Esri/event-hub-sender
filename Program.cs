@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Messaging.EventHubs;
@@ -40,6 +41,7 @@ namespace EventHubsSender
         private static bool convertToJson = Boolean.Parse(ConfigurationManager.AppSettings["convertToJson"]);
         private static int numLinesPerBatch = Int32.Parse(ConfigurationManager.AppSettings["numLinesPerBatch"]);
         private static int sendInterval = Int32.Parse(ConfigurationManager.AppSettings["sendInterval"]);
+        private static long realRateMultiplier = Int64.Parse(ConfigurationManager.AppSettings["realRateMultiplier"]);
         private static int timeField = Int32.Parse(ConfigurationManager.AppSettings["timeField"]);
         private static bool setToCurrentTime = Boolean.Parse(ConfigurationManager.AppSettings["setToCurrentTime"]);
         private static string dateFormat = ConfigurationManager.AppSettings["dateFormat"];
@@ -102,8 +104,10 @@ namespace EventHubsSender
                 if (hasHeaderRow){
                     contentArray = contentArray.Where((source, index) => index != 0).ToArray();
                 }
+
                 int c = contentArray.Length;
-                
+                numLinesPerBatch = sendInterval == -1 ? 1 : numLinesPerBatch;
+                    
                 string connectionSubstring = connectionString.Substring(0,connectionString.LastIndexOf(';'));
                 Console.WriteLine($"Event hub connection string: {connectionSubstring}");
                 string eventHubName = connectionString.Substring(connectionString.LastIndexOf('=')+1);
@@ -116,10 +120,18 @@ namespace EventHubsSender
                     int count = 0;
                     int countTotal = 0;
                     EventDataBatch eventBatch = null;
-                    //string messageBody = "";
+                    
                     
                     var stopwatch = new Stopwatch();
                     var taskStopwatch = new Stopwatch();
+
+                    DateTime previousLineDateTime = DateTime.MinValue;
+                    DateTime currentLineDateTime = DateTime.MinValue;
+                    bool hasCurrentDate = false;
+                    long waitTime = -1;
+                    string timeString;
+                    long timeUnix;
+
                     while (runTask)
                     {
                         taskStopwatch.Start();
@@ -137,14 +149,42 @@ namespace EventHubsSender
                                 stopwatch.Start();
                             }
                             eventBatch = eventBatch ?? await producerClient.CreateBatchAsync();
-                            dynamic[] values = line.Split(fieldDelimiter);
+                            string[] values = Regex.Split(line, $"{fieldDelimiter}(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
                             
+                            if (sendInterval == -1)
+                            {
+                                timeString = values[timeField];
+                                hasCurrentDate = false;
+
+                                if (long.TryParse(timeString, out timeUnix))
+                                {
+                                    currentLineDateTime = timeString.Length == 10 ? DateTimeOffset.FromUnixTimeSeconds(timeUnix).DateTime : DateTimeOffset.FromUnixTimeMilliseconds(timeUnix).DateTime;
+                                    hasCurrentDate = true;
+                                }
+                                else
+                                {
+                                    hasCurrentDate = DateTime.TryParse(timeString, out currentLineDateTime);
+                                }
+
+                                if (hasCurrentDate && previousLineDateTime != DateTime.MinValue && currentLineDateTime > previousLineDateTime)
+                                {
+                                    waitTime = Convert.ToInt64((currentLineDateTime - previousLineDateTime).TotalMilliseconds);
+                                    Thread.Sleep((int)(waitTime / (realRateMultiplier / 100)));
+                                }
+                                if (hasCurrentDate)
+                                {
+                                    previousLineDateTime = currentLineDateTime;
+                                }
+                            }
+
                             if (setToCurrentTime)
                             {
                                 if (String.IsNullOrEmpty(dateFormat))
                                 {
+                                    //Console.WriteLine("setting time value");
                                     string dt = new DateTimeOffset(DateTime.Now).ToUnixTimeMilliseconds().ToString();
                                     values[timeField] = dt;
+                                    //Console.WriteLine("done setting time value");
                                 }
                                 else
                                 {
@@ -157,10 +197,8 @@ namespace EventHubsSender
                                         values[timeField] = dt;
                                     }
                                 }
-                            }
-                            //Console.WriteLine(schema.ToString());
-
-                            
+                            }                            
+                                                       
 
                             if(convertToJson){
                                 for (int i = 0; i < schema.Count; i++)
